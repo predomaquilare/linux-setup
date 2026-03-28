@@ -159,7 +159,20 @@ sudo apt-get install -y \
   python3-jinja2 mm-common \
   libselinux1-dev libmount-dev \
   vim curl wget jq cpio zip unzip
-ok "Dependencias apt instaladas."
+  ok "Dependencias apt instaladas."
+
+# hwdata pc file (apt instala mas nao cria o .pc completo)
+if ! pkg-config --exists hwdata 2>/dev/null; then
+	sudo tee /usr/local/lib/pkgconfig/hwdata.pc > /dev/null << 'EOF'
+prefix=/usr
+pkgdatadir=${prefix}/share/hwdata
+
+Name: hwdata
+Description: Hardware identification and configuration data
+Version: 0.360
+Variables: pkgdatadir=${prefix}/share/hwdata
+EOF
+fi
 
 # =============================================================================
 # PASSO 3 — Meson novo via pip
@@ -167,6 +180,26 @@ ok "Dependencias apt instaladas."
 log "━━━ Passo 3: Meson atualizado ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 sudo pip3 install meson --upgrade --quiet
 ok "Meson: $(meson --version)"
+
+
+# =============================================================================
+# PASSO 3b — CMake atualizado (>= 3.25 para suporte a CXX_STANDARD 26)
+# =============================================================================
+log "━━━ Passo 3b: CMake atualizado ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+CMAKE_VERSION=$(cmake --version 2>/dev/null | head -1 | grep -oP '[0-9]+\.[0-9]+' | head -1)
+CMAKE_MAJOR=$(echo "$CMAKE_VERSION" | cut -d. -f1)
+CMAKE_MINOR=$(echo "$CMAKE_VERSION" | cut -d. -f2)
+
+if [[ "$CMAKE_MAJOR" -lt 3 ]] || { [[ "$CMAKE_MAJOR" -eq 3 ]] && [[ "$CMAKE_MINOR" -lt 25 ]]; }; then
+  warn "CMake $CMAKE_VERSION muito antigo. Instalando versão nova via pip..."
+  sudo pip3 install cmake --upgrade --quiet
+  # Garante que o cmake do pip tem prioridade
+  CMAKE_PIP=$(python3 -c "import site; print(site.getsitepackages()[0])")/../../bin/cmake
+  [[ -x "$CMAKE_PIP" ]] && sudo ln -sf "$CMAKE_PIP" /usr/local/bin/cmake || true
+  ok "CMake: $(cmake --version | head -1)"
+else
+  ok "CMake $CMAKE_VERSION OK (>= 3.25)."
+fi
 
 # =============================================================================
 # PASSO 4 — Header dma-buf.h uapi
@@ -395,7 +428,6 @@ cmake_build_install "$SRC_DIR/hyprlang"
 cmake_build_install "$SRC_DIR/hyprcursor"
 cmake_build_install "$SRC_DIR/hyprgraphics"
 cmake_build_install "$SRC_DIR/hyprwire"
-cmake_build_install "$SRC_DIR/hyprtoolkit"
 
 # aquamarine (protocolos precisam ser regenerados com hyprwayland-scanner)
 rm -f "$SRC_DIR/aquamarine/protocols/"*.hpp "$SRC_DIR/aquamarine/protocols/"*.cpp 2>/dev/null || true
@@ -414,8 +446,10 @@ cmake -B "$AQ_BUILD" -S "$SRC_DIR/aquamarine" \
 cmake --build "$AQ_BUILD" -j"$(nproc)"
 sudo cmake --install "$AQ_BUILD"; sudo ldconfig; ok "aquamarine instalado."
 
+cmake_build_install "$SRC_DIR/hyprtoolkit"
 cmake_build_install "$SRC_DIR/hyprland-protocols"
 ok "Todas as libs hypr* instaladas."
+
 
 # =============================================================================
 # PASSO 7 — Hyprland
@@ -524,6 +558,7 @@ cmake_build_install "$SRC_DIR/hyprpaper"
 
 # Config do hyprpaper
 HYPRPAPER_CONF="$HOME/.config/hypr/hyprpaper.conf"
+mkdir -p "$(dirname "$HYPRPAPER_CONF")"   # ← adiciona essa linha
 if [[ ! -f "$HYPRPAPER_CONF" ]]; then
   cat > "$HYPRPAPER_CONF" << 'EOF'
 # hyprpaper.conf
