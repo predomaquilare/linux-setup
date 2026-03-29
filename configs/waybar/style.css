@@ -1,0 +1,126 @@
+/* ============================================================
+   Waybar — Eva-01 Theme
+   Roxo profundo + Verde AT Field neon
+   ============================================================ */
+
+* {
+  font-family: "JetBrainsMonoNL Nerd Font", "JetBrains Mono", monospace;
+  font-size: 12px;
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+}
+
+window#waybar {
+  background: rgba(8, 4, 18, 0.95);
+  border-bottom: 1px solid #2a1545;
+  color: #c8a8f0;
+}
+
+/* ── Workspaces ── */
+#workspaces {
+  padding: 0 6px;
+  background: rgba(10, 5, 22, 0.8);
+}
+
+#workspaces button {
+  padding: 0 9px;
+  color: #4a3060;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+
+#workspaces button:hover {
+  background: rgba(74, 45, 122, 0.2);
+  color: #9060c0;
+  border-bottom: 2px solid #6a3fa8;
+}
+
+#workspaces button.active {
+  color: #39ff6e;
+  background: rgba(57, 255, 110, 0.08);
+  border-bottom: 2px solid #39ff6e;
+  font-weight: bold;
+}
+
+#workspaces button.urgent {
+  color: #ff3333;
+  border-bottom: 2px solid #ff3333;
+}
+
+/* ── Window title ── */
+#window {
+  color: #5a3a7a;
+  padding: 0 12px;
+  font-size: 11px;
+  font-style: italic;
+}
+
+/* ── Relogio central ── */
+#clock {
+  font-size: 21px;
+  font-weight: bold;
+  color: #39ff6e;
+  letter-spacing: 5px;
+  padding: 0 24px;
+  background: rgba(5, 2, 12, 0.92);
+  border-left: 1px solid #1e0f35;
+  border-right: 1px solid #1e0f35;
+}
+
+/* ── Visualizador de audio ── */
+#custom-visualizer {
+  color: #6a3fa8;
+  padding: 0 10px;
+  font-size: 14px;
+  letter-spacing: 1px;
+  border-left: 1px solid rgba(42, 21, 69, 0.5);
+  min-width: 80px;
+}
+
+/* ── Modulos direita ── */
+#cpu,
+#memory,
+#temperature,
+#backlight,
+#pulseaudio,
+#network,
+#battery {
+  padding: 0 11px;
+  color: #c8a8f0;
+  border-left: 1px solid rgba(42, 21, 69, 0.5);
+}
+
+#cpu          { color: #b890e0; }
+#cpu.warning  { color: #ffaa44; }
+#cpu.critical { color: #ff4444; }
+
+#memory         { color: #a870d0; }
+#memory.warning { color: #ffaa44; }
+#memory.critical{ color: #ff4444; }
+
+#temperature          { color: #9858c0; }
+#temperature.critical { color: #ff2222; }
+
+#backlight  { color: #c090e8; }
+#pulseaudio { color: #b878d8; }
+#pulseaudio.muted { color: #3a2550; }
+
+#network              { color: #39ff6e; }
+#network.disconnected { color: #3a2550; }
+
+#battery          { color: #39ff6e; }
+#battery.warning  { color: #ffaa00; }
+#battery.critical { color: #ff3333; }
+#battery.charging { color: #39ff6e; }
+
+#tray {
+  padding: 0 10px;
+  border-left: 1px solid rgba(42, 21, 69, 0.5);
+}
+
+tooltip { background: rgba(8, 4, 18, 0.98); border: 1px solid #4a2d7a; border-radius: 4px; padding: 6px 10px; }
+tooltip label { color: #c8a8f0; font-size: 12px; }

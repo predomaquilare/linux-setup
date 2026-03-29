@@ -1,0 +1,200 @@
+set nocompatible
+set t_Co=256
+set encoding=utf-8
+set lazyredraw
+set termguicolors
+
+call plug#begin("~/.vim/plugged")
+  " Colorscheme Eva-01 oficial
+  Plug 'hachy/eva01.vim'
+
+  " Status bar
+  Plug 'bling/vim-airline'
+  Plug 'vim-airline/vim-airline-themes'
+
+  " Git integration
+  Plug 'tpope/vim-fugitive'
+  Plug 'airblade/vim-gitgutter'
+
+  " Navegacao tmux+vim
+  Plug 'christoomey/vim-tmux-navigator'
+
+  " Fuzzy finder
+  Plug 'ctrlpvim/ctrlp.vim'
+
+  " Comentarios
+  Plug 'tpope/vim-commentary'
+
+  " Surround
+  Plug 'tpope/vim-surround'
+
+  " File manager
+  Plug 'scrooloose/nerdtree'
+
+  " Repeat
+  Plug 'tpope/vim-repeat'
+
+  " ROS support
+  Plug 'klaxalk/vim-ros'
+
+  " C++ highlight
+  Plug 'octol/vim-cpp-enhanced-highlight'
+
+  " Home screen
+  Plug 'mhinz/vim-startify'
+
+  " Autocomplete — YouCompleteMe
+  Plug 'ycm-core/YouCompleteMe', { 'do': './install.py --clangd-completer' }
+
+  " GitHub Copilot
+  Plug 'github/copilot.vim'
+call plug#end()
+
+" === Auto-instala plugins na primeira vez ===
+if empty(glob("~/.vim/plugged/vim-airline"))
+  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+endif
+
+" === Colorscheme Eva-01 oficial ===
+" Instala plugins automaticamente na primeira vez
+if empty(glob("~/.vim/plugged/eva01.vim"))
+  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+else
+  try
+    set background=dark
+    colorscheme eva01
+  catch
+    colorscheme desert
+  endtry
+endif
+
+let g:airline_theme = 'dark'
+autocmd VimEnter * AirlineRefresh
+
+" === Configuracoes gerais ===
+set clipboard=unnamedplus
+syntax enable
+set splitbelow
+set splitright
+set number
+set relativenumber
+set expandtab
+set shiftwidth=2
+set softtabstop=2
+set tabstop=2
+set autoindent
+set smartindent
+set scrolloff=10
+set showmatch
+set ignorecase
+set smartcase
+set hlsearch
+set incsearch
+set wildmenu
+set wildmode=full
+set wrap
+set linebreak
+set synmaxcol=400
+
+" === Leader ===
+nnoremap , <NOP>
+let mapleader = ","
+nmap <space> ,
+let maplocalleader = "\`"
+
+" === Splits com vim keys ===
+nnoremap <C-J> <C-W><C-J>
+nnoremap <C-K> <C-W><C-K>
+nnoremap <C-L> <C-W><C-L>
+nnoremap <C-H> <C-W><C-H>
+
+" === Tabs ===
+nnoremap <Tab>   :bnext<CR>
+nnoremap <S-Tab> :bprevious<CR>
+nnoremap <S-J>   :tabn<CR>
+nnoremap <S-K>   :tabp<CR>
+
+" === Escape no insert mode ===
+imap <expr> jk (pumvisible()?(empty(v:completed_item)?("<Esc>l"):("\<C-n>\<C-p>")):("\<Esc>l"))
+
+" === H e L para inicio/fim de linha ===
+nmap H ^
+vmap H ^
+nmap L $
+vmap L $
+
+" === Busca visual ===
+vnoremap // y/<C-R>"<CR>
+
+" === nao pula pro proximo na busca ===
+nmap * *N
+
+" === Salvar com maiuscula ===
+command! WQ wq
+command! Wq wq
+command! W w
+command! Q q
+
+" === NERDTree ===
+nnoremap <leader>n :NERDTreeToggle<CR>
+
+" === CtrlP ===
+let g:ctrlp_map = '<C-p>'
+let g:ctrlp_cmd = 'CtrlP'
+let g:ctrlp_working_path_mode = 'ra'
+
+" === Startify bookmarks Eva-01 ===
+let g:startify_bookmarks = [
+      \ { 'r': '~/.config/ranger/rc.conf' },
+      \ { 't': '~/.tmux.conf' },
+      \ { 'v': '~/.vimrc' },
+      \ { 'z': '~/.zshrc' },
+      \ { 'a': '~/.zshrc_laser_aliases' },
+      \ ]
+
+" === Airline Eva-01 x Gundam ===
+let g:airline_powerline_fonts = 1
+let g:airline#extensions#branch#enabled = 1
+let g:airline#extensions#hunks#enabled = 1
+let g:airline_theme = 'violet'
+
+" Cores customizadas da airline pra bater com o wallpaper
+let g:airline#themes#violet#palette = {}
+function! AirlineThemeEva()
+  let l:gui_bg   = '#0d0d1a'
+  let l:gui_roxo = '#a800c0'
+  let l:gui_verde= '#4d8c57'
+  let l:gui_amar = '#c8b400'
+  let l:gui_fg   = '#dadada'
+  let g:airline_theme_patch_func = ''
+endfunction
+
+" === YouCompleteMe ===
+let g:ycm_global_ycm_extra_conf = '~/.vim/.ycm_extra_conf.py'
+let g:ycm_confirm_extra_conf = 0
+let g:ycm_autoclose_preview_window_after_completion = 1
+let g:ycm_min_num_of_chars_for_completion = 2
+let g:ycm_seed_identifiers_with_syntax = 1
+let g:ycm_collect_identifiers_from_tags_files = 1
+" Navegar entre sugestoes com Tab
+let g:ycm_key_list_select_completion = ['<Tab>', '<Down>']
+let g:ycm_key_list_previous_completion = ['<S-Tab>', '<Up>']
+
+" === GitHub Copilot ===
+let g:copilot_node_command = '/usr/bin/node'
+" Aceitar sugestao com Ctrl+J (nao conflita com YCM)
+imap <silent><script><expr> <C-J> copilot#Accept("\<CR>")
+let g:copilot_no_tab_map = 1
+" Navegar entre sugestoes
+imap <M-]> <Plug>(copilot-next)
+imap <M-[> <Plug>(copilot-previous)
+" Habilitar/desabilitar
+nnoremap <leader>cp :Copilot enable<CR>
+nnoremap <leader>cx :Copilot disable<CR>
+
+" === Fix cores no tmux ===
+if !has("nvim")
+  set term=screen-256color
+  cnoreabbrev vt vertical terminal
+  cnoreabbrev st terminal
+endif

@@ -1,0 +1,158 @@
+# =============================================================================
+# ~/.zshrc_laser_aliases
+# Aliases e funcoes baseados no linux-setup do LASER-Robotics
+# =============================================================================
+
+# FZF
+export FZF_DEFAULT_OPTS='--height 25%'
+export FZF_DEFAULT_COMMAND='ag -l -f --nocolor -g ""'
+export EDITOR='/usr/local/bin/vim'
+export VISUAL='/usr/local/bin/vim'
+
+# Vi mode no zsh + hjkl no menu de completion
+bindkey -v
+bindkey -M menuselect 'h' vi-backward-char
+bindkey -M menuselect 'k' vi-up-line-or-history
+bindkey -M menuselect 'l' vi-forward-char
+bindkey -M menuselect 'j' vi-down-line-or-history
+unsetopt share_history
+
+# Aliases gerais
+alias :q=exit
+alias sb="source ~/.zshrc"
+alias ra=ranger
+alias demangle="c++filt"
+
+# Ranger: volta pro diretorio certo ao sair
+ranger() {
+  command ranger --choosedir="/tmp/lastrangerdir" "$@"
+  LASTDIR=$(cat "/tmp/lastrangerdir")
+  cd "$LASTDIR"
+}
+
+# Git
+alias gs="git status"
+alias gcmp="git checkout master; git pull"
+alias gr="git submodule foreach git"
+alias glog="git log --graph --abbrev-commit --date=relative --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'"
+
+git2ssh() {
+  old_remote=$(git remote get-url origin)
+  echo "Old remote: $old_remote"
+  new_remote=$(echo $old_remote | sed -r 's|https://([^/]+)/(.+)|git@\1:\2|' | head -n 1)
+  echo "New remote: $new_remote"
+  [ -n "$new_remote" ] && git remote set-url origin "$new_remote"
+}
+
+git2https() {
+  old_remote=$(git remote get-url origin)
+  echo "Old remote: $old_remote"
+  new_remote=$(echo $old_remote | sed -r 's|.*git@(.+):(.+)|https://\1/\2|' | head -n 1)
+  echo "New remote: $new_remote"
+  [ -n "$new_remote" ] && git remote set-url origin "$new_remote"
+}
+
+gitUpdateSubmodules() {
+  echo "Syncing git submodules"
+  command git submodule sync
+  echo "Updating git submodules"
+  command git submodule update --init --recursive
+}
+
+# Tmux
+alias :qa="quitTmuxSession"
+
+quitTmuxSession() {
+  if [ ! -z "$TMUX" ]; then
+    echo "Matando sessao tmux..."
+    pids=$(tmux list-panes -s -F "#{pane_pid} #{pane_current_command}" | grep -v tmux | awk '{print $1}')
+    for pid in $pids; do
+      kill -9 "$pid" 2>/dev/null &
+    done
+    SESSION_NAME=$(tmux display-message -p '#S')
+    tmux kill-session -t "$SESSION_NAME"
+  else
+    exit
+  fi
+}
+
+killp() {
+  if [ $# -eq 0 ]; then
+    echo "killp() precisa de um argumento (PID)"
+    return
+  fi
+  for child in $(ps -o pid,ppid -ax | awk "{ if (\$2 == $1) { print \$1 }}"); do
+    killp $child
+  done
+  kill -9 "$1" 2>/dev/null
+}
+
+# Auto-tmux: sessao unica por janela de terminal (baseado no PID do zsh pai)
+runTmux() {
+  SESSION_NAME="T$PPID"
+  EXISTING=$(tmux ls 2>/dev/null | grep "$SESSION_NAME" | wc -l)
+  if [ "$EXISTING" -gt "0" ]; then
+    tmux -2 attach-session -t "$SESSION_NAME"
+  else
+    tmux new-session -s "$SESSION_NAME"
+  fi
+  # restaura ultimo diretorio ao sair
+  FILENAME="/tmp/tmux_restore_path.txt"
+  if [ -f "$FILENAME" ]; then
+    MY_PATH=$(tail -n 1 "$FILENAME")
+    rm "$FILENAME"
+    [ -d "$MY_PATH" ] && cd "$MY_PATH"
+  fi
+}
+
+zshexit() {
+  pwd >> /tmp/tmux_restore_path.txt
+}
+
+# Roda auto-tmux somente em shells interativos fora do tmux
+case "$-" in
+  *i*)
+    [[ ! $TERM =~ screen ]] && [ -z "$TMUX" ] && runTmux
+    ;;
+esac
+
+# Utilitarios
+getVideoThumbnail() {
+  if [ $# -eq 0 ]; then
+    echo "Uso: getVideoThumbnail <arquivo> [timestamp=00:00:01]"
+    return 1
+  fi
+  file="$1"
+  frame="${2:-00:00:01}"
+  output="${file%.*}_thumbnail.jpg"
+  ffmpeg -i "$file" -ss "$frame" -vframes 1 "$output"
+  echo "Thumbnail salvo em: $output"
+}
+
+auto-retry() {
+  false
+  while [ $? -ne 0 ]; do
+    "$@" || (sleep 1; false)
+  done
+}
+
+ssh-auto-retry() {
+  auto-retry ssh "$@"
+}
+
+cd_media() {
+  cd /media/$USER
+  ranger
+}
+
+# Toggle entre zsh e bash no kitty
+toggle-shell() {
+  current=$(grep "^shell" ~/.config/kitty/kitty.conf 2>/dev/null | awk '{print $2}')
+  if [[ "$current" == "/usr/bin/zsh" ]]; then
+    sed -i 's|^shell /usr/bin/zsh|shell /bin/bash|' ~/.config/kitty/kitty.conf
+    echo "Kitty agora vai abrir com: bash (abre novo terminal pra aplicar)"
+  else
+    sed -i 's|^shell /bin/bash|shell /usr/bin/zsh|' ~/.config/kitty/kitty.conf
+    echo "Kitty agora vai abrir com: zsh (abre novo terminal pra aplicar)"
+  fi
+}
