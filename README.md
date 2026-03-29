@@ -1,2 +1,2 @@
 # linux-setup
-Linux setup for day to day use, with ros2 tools
+A vibe coded Linux setup for day to day use, with ros2 tools
