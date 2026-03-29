@@ -225,3 +225,63 @@ if ! grep -q "ros/humble" "$HOME/.bashrc"; then
   echo "source /opt/ros/humble/setup.bash" >> "$HOME/.bashrc"
 fi
 
+# =============================================================================
+# NODE.JS 20 — necessario para Copilot
+# =============================================================================
+log "Instalando Node.js 20..."
+sudo apt remove -y nodejs nodejs-doc libnode-dev 2>/dev/null || true
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+ok "Node.js $(node --version) instalado."
+
+# =============================================================================
+# VIM-PLUG + PLUGINS (inclui YCM e Copilot)
+# =============================================================================
+log "Instalando vim-plug e plugins..."
+if [ ! -f "$HOME/.vim/autoload/plug.vim" ]; then
+  curl -fLo "$HOME/.vim/autoload/plug.vim" --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+fi
+
+if [[ -f "$CONFIGS_DIR/vim/vimrc" ]]; then
+  cp "$CONFIGS_DIR/vim/vimrc" "$HOME/.vimrc"
+  ok "vimrc copiado."
+fi
+
+mkdir -p "$HOME/.vim"
+if [[ -f "$CONFIGS_DIR/vim/ycm_extra_conf.py" ]]; then
+  cp "$CONFIGS_DIR/vim/ycm_extra_conf.py" "$HOME/.vim/.ycm_extra_conf.py"
+fi
+
+vim +PlugInstall +qall 2>/dev/null || true
+ok "Plugins vim instalados."
+
+# =============================================================================
+# YOUCOMPLETEME — compila com python3.12 e clangd
+# =============================================================================
+log "Instalando dependencias do YCM..."
+sudo apt install -y build-essential cmake clangd clang libclang-dev
+
+log "Compilando YouCompleteMe com python3.12 e clangd..."
+if [ -d "$HOME/.vim/plugged/YouCompleteMe" ]; then
+  cd "$HOME/.vim/plugged/YouCompleteMe"
+  python3.12 install.py --clangd-completer
+  cd "$HOME"
+  ok "YCM compilado com sucesso."
+else
+  warn "YCM nao encontrado. Abre o vim, rode :PlugInstall e depois:"
+  warn "  cd ~/.vim/plugged/YouCompleteMe && python3.12 install.py --clangd-completer"
+fi
+
+# Suprime avisos de unused-includes do clangd
+cat > "$HOME/.clangd" << 'CLANGD_EOF'
+Diagnostics:
+  UnusedIncludes: None
+CLANGD_EOF
+ok "clangd configurado."
+
+# =============================================================================
+# GITHUB COPILOT
+# =============================================================================
+ok "Copilot instalado via vim-plug com Node.js $(node --version)."
+ok "Para autenticar: abra o vim e rode :Copilot setup"
